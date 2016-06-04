@@ -1,0 +1,53 @@
+#!/bin/sh
+
+. /etc/default/flamehaze
+
+start_service() {
+	if start-stop-daemon --stop --quiet --signal 0 --pidfile $FLAMEHAZE_PID_FILE
+	then
+		echo Already Running \(pid: $(cat $FLAMEHAZE_PID_FILE)\)
+		exit 1
+	fi
+	start-stop-daemon --start --background --pidfile $FLAMEHAZE_PID_FILE --make-pidfile --chuid $FLAMEHAZE_USER --exec "/usr/bin/flamehaze"
+	echo Start flamehaze
+}
+
+stop_service() {
+	start-stop-daemon --stop --pidfile $FLAMEHAZE_PID_FILE && rm $FLAMEHAZE_PID_FILE
+	echo Stopping flamehaze
+}
+
+display_status() {
+	if [ -f $FLAMEHAZE_PID_FILE ]
+	then
+		pid=$(cat /var/run/flamehaze.pid)
+
+		if [ -d /proc/$pid ]
+		then
+			echo Flamehaze running \( pid: $pid \)
+		else
+			echo Flamehaze: pid file exists, but not running \( pid: $pid \)
+		fi
+	else
+		echo Flamehaze not running
+	fi
+}
+
+case "$1" in
+	start)
+		start_service
+		;;
+	stop)
+		stop_service
+		;;
+	restart)
+		stop_service
+		start_service
+		;;
+	status)
+		display_status
+		;;
+	*)
+		echo usage: $0 "{start|stop|restart}"
+		exit 1
+esac	
