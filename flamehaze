@@ -1,4 +1,4 @@
-#!/usr/bin/env python
+#!/usr/bin/python
 # -*- coding: utf-8 -*-
 
 import daemon
@@ -6,6 +6,7 @@ import json
 import subprocess
 import time
 import os
+import random
 import shutil
 import socket
 import sys
@@ -15,7 +16,7 @@ import urlparse
 from ConfigParser import SafeConfigParser
 
 TMP_SRC_FILE = ''
-TMP_IMG_FILE = ''
+TMP_IMG_NAME = 'flamehaze-tmp'
 
 FUZETSU_EXECUTABLE = 'fuzetsu'
 GET_PROBLEM_PATH = 'get_unjudged.php'
@@ -23,20 +24,27 @@ PUT_RESULT_PATH = 'put_result.php'
 
 POLL_PROBLEM_INTERVAL = 1
 
+# when enabled, one host behaves like multiple hosts. Use in case of debug.
+DUMMY_MODE = False
+
 def write_to_file(filename, content):
 	f = open(filename, 'w')
 	f.write(content)
 	f.close()
 
 
-def read_problem(outlaw_url):
+def get_hostname():
+	hostname = socket.gethostbyaddr(socket.gethostname())[0]
+	if DUMMY_MODE:
+		hostname = hostname + (str)(random.randint(0,10000))
+	return hostname
+
+def read_problem(outlaw_url, hostname):
 	t = {}
 	t['status'] = 'not_loaded'
 
 	while t['status'] != 'success':
 		try:
-			hostname = socket.gethostbyaddr(socket.gethostname())[0]
-
 			param_query = urllib.urlencode({'hostname': hostname})
 
 			url = urlparse.urljoin(outlaw_url, GET_PROBLEM_PATH)
@@ -65,28 +73,40 @@ def output_result(outlaw_url, result):
 		# 現時点では、とりあえず他のサーバが処理してくれるはずなので無視
 
 
-def execute_input(img_file, in_txt):
-	item_res = {}
-
-	shutil.copy(img_file, img_file + '.copy')
-
-	start_time = time.time()
-
-	p = subprocess.Popen([FUZETSU_EXECUTABLE, 'run', img_file + '.copy'],
+def delete_image(img_name):
+	p = subprocess.Popen([FUZETSU_EXECUTABLE, 'lxc', 'destroy', img_name],
 			     stdin=subprocess.PIPE,
 			     stdout=subprocess.PIPE,
 			     stderr=subprocess.PIPE)
-	p.stdin.write(in_txt.replace('\n', '\r\n'))
-	p.stdin.write("\x04") # EOF
+	p.stdin.close()
+	p.wait()
+
+
+def execute_input(img_file, in_txt):
+	item_res = {}
+
+	start_time = time.time()
+	p = subprocess.Popen([FUZETSU_EXECUTABLE, 'lxc', 'run', img_file],
+			     stdin=subprocess.PIPE,
+			     stdout=subprocess.PIPE,
+			     stderr=subprocess.PIPE)
+	p.stdin.write(in_txt)
 	p.stdin.close()
 	exitstatus = p.wait()
-	end_time = time.time()
 
 	item_res['output'] = p.stdout.read()
 
-	os.remove(img_file + '.copy')
-	
-	item_res['execution_time'] = end_time - start_time
+	for line in open('/tmp/fuzetsu-time-ns'):
+		time_ns = (float) (line.rstrip())
+		exe_time_sec = (time_ns / 1000000000.0)
+
+	exe_mem_kb = -1
+
+	for line in open('/tmp/fuzetsu-mem-usage'):
+		exe_mem_kb = (int) (line.rstrip())
+
+	item_res['execution_time'] = exe_time_sec
+	item_res['used_mem_kb'] = exe_mem_kb
 
 	if exitstatus == 0:
 		item_res['status'] = 'success'
@@ -101,7 +121,7 @@ def execute_input(img_file, in_txt):
 	elif exitstatus == 137:
 		item_res['status'] = 'soft_tle'
 	else:
-		item_res['status'] = 'soft_fail'
+		item_res['status'] = 'soft_runtime_error'
 
 	return item_res
 
@@ -109,7 +129,7 @@ def execute_input(img_file, in_txt):
 def build_src(src_file, img_file, language):
 	start_time = time.time()
 
-	p = subprocess.Popen([FUZETSU_EXECUTABLE, 'build', language, src_file, img_file],
+	p = subprocess.Popen([FUZETSU_EXECUTABLE, 'lxc', 'build', language, src_file, img_file],
 			     stdin=subprocess.PIPE,
 			     stdout=subprocess.PIPE,
 			     stderr=subprocess.PIPE)
@@ -154,7 +174,6 @@ def main():
 	outlaw_username = parser.get('flamehaze', 'outlaw_username')
 	outlaw_passwd = parser.get('flamehaze', 'outlaw_password')
 	TMP_SRC_FILE = os.environ['FLAMEHAZE_TMP_SRC_FILE']
-	TMP_IMG_FILE = os.environ['FLAMEHAZE_TMP_IMG_FILE']
 
 
 	passwd_mgr = urllib2.HTTPPasswordMgrWithDefaultRealm()
@@ -166,13 +185,21 @@ def main():
 	urllib2.install_opener(opener)
 
 	while True:
-		submission = read_problem(outlaw_uri)
+		hostname = get_hostname()
+		submission = read_problem(outlaw_uri, hostname)
 	
 		write_to_file(TMP_SRC_FILE, submission['source_code'])
-		res = build_src(TMP_SRC_FILE, TMP_IMG_FILE, submission['language'])
+
+		if submission['language'] not in ['lxc-c11', 'lxc-cpp11', 'lxc-java8', 'lxc-perl5', 'lxc-php7.0', 'lxc-python2', 'lxc-python3', 'lxc-ruby2.3', 'lxc-scala']:
+			res = {}
+			res['status'] = 'build_fail'
+			output_result(outlaw_uri, res)
+			continue
+
+		res = build_src(TMP_SRC_FILE, TMP_IMG_NAME, submission['language'])
 
 		res['submission_id'] = submission['submission_id']
-		res['judger_hostname'] = socket.gethostbyaddr(socket.gethostname())[0]
+		res['judger_hostname'] = hostname
 		
 		if res['status'] != 'success':
 			output_result(outlaw_uri, res)
@@ -185,12 +212,14 @@ def main():
 
 			start_time = time.time()
 
-			item_res = execute_input(TMP_IMG_FILE, in_txt)
+			item_res = execute_input(TMP_IMG_NAME, in_txt)
 			res['output_list'].append(item_res)
 			
 			if item_res['status'] != 'success':
 				res['status'] = item_res['status']
 				break
+
+		delete_image(TMP_IMG_NAME)
 
 		output_result(outlaw_uri, res)
 

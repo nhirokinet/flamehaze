@@ -1,6 +1,5 @@
 install: init.d/flamehaze default/flamehaze flamehaze
 	#useradd flamehaze
-	#usermod -aG kvm flamehaze
 	
 	cp ./init.d/flamehaze /etc/init.d/flamehaze
 	cp ./default/flamehaze /etc/default/flamehaze
@@ -16,3 +15,5 @@ install: init.d/flamehaze default/flamehaze flamehaze
 	chown flamehaze /etc/flamehaze.ini
 	
 	touch /var/log/flamehaze.log
+	
+	systemctl daemon-reload

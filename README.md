@@ -1,4 +1,3 @@
-You need fuzetsu.  
 do as root
 ```
 useradd flamehaze
