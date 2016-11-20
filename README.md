@@ -1,6 +1,6 @@
 do as root
 ```
-useradd flamehaze
-usermod -aG kvm flamehaze
 make install
 ```
+
+[fuzetsu](https://github.com/nhirokinet/fuzetsu/) required
