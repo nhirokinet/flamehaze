@@ -1,6 +1,4 @@
 install: init.d/flamehaze default/flamehaze flamehaze
-	#useradd flamehaze
-	
 	cp ./init.d/flamehaze /etc/init.d/flamehaze
 	cp ./default/flamehaze /etc/default/flamehaze
 	
