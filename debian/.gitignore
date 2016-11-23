@@ -1,0 +1,8 @@
+debhelper-build-stamp
+files
+flamehaze.debhelper.log
+flamehaze.substvars
+flamehaze
+flamehaze.postinst.debhelper
+flamehaze.postrm.debhelper
+flamehaze.prerm.debhelper

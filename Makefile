@@ -1,17 +1,34 @@
+.PHONY: all install install_daemon_scripts dpkg
+
+all:
+	true
+
 install: init.d/flamehaze default/flamehaze flamehaze
-	cp ./init.d/flamehaze /etc/init.d/flamehaze
-	cp ./default/flamehaze /etc/default/flamehaze
+	mkdir -p $(DESTDIR)/usr/bin/
+	cp ./flamehaze $(DESTDIR)/usr/bin/flamehaze
 	
+	#cp ./init.d/flamehaze $(DESTDIR)/etc/init.d/flamehaze
+	#cp ./default/flamehaze $(DESTDIR)/etc/default/flamehaze
 	
-	cp ./flamehaze /usr/bin/flamehaze
+	#chmod +x $(DESTDIR)/etc/init.d/flamehaze
+	#chmod +x $(DESTDIR)/usr/bin/flamehaze
 	
-	chmod +x /etc/init.d/flamehaze
-	chmod +x /usr/bin/flamehaze
+	mkdir -p $(DESTDIR)/etc
+	if [ ! -e $(DESTDIR)/etc/flamehaze.ini ]; then cp sample_config.ini $(DESTDIR)/etc/flamehaze.ini; fi
+	chmod 660 $(DESTDIR)/etc/flamehaze.ini
+	chown root.flamehaze $(DESTDIR)/etc/flamehaze.ini
 	
-	if [ ! -e /etc/flamehaze.ini ]; then cp sample_config.ini /etc/flamehaze.ini; fi
-	chmod 600 /etc/flamehaze.ini
-	chown flamehaze /etc/flamehaze.ini
+	mkdir -p $(DESTDIR)/var/log
+	touch $(DESTDIR)/var/log/flamehaze.log
+
+install_daemon_scripts:
+	cp ./init.d/flamehaze $(DESTDIR)/etc/init.d/flamehaze
+	cp ./default/flamehaze $(DESTDIR)/etc/default/flamehaze
 	
-	touch /var/log/flamehaze.log
-	
-	systemctl daemon-reload
+	chmod +x $(DESTDIR)/etc/init.d/flamehaze
+	chmod +x $(DESTDIR)/usr/bin/flamehaze
+
+dpkg:
+	rm debian/flamehaze -Rf
+	rm debian/flamehaze.debhelper.log -f
+	fakeroot debian/rules binary

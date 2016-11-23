@@ -1,0 +1,15 @@
+Source: flamehaze
+Section: unknown
+Priority: optional
+Maintainer: nhirokinet <nhirokinet@nhiroki.net>
+Build-Depends: debhelper (>=9)
+Standards-Version: 3.9.6
+Homepage: https://github.com/nhirokinet/flamehaze
+Vcs-Git: git@github.com:nhirokinet/flamehaze.git
+Vcs-Browser: https://github.com/nhirokinet/ffamehaze
+
+Package: flamehaze
+Architecture: any
+Depends: ${shlibs:Depends}, ${misc:Depends}, fuzetsu (>=0.0.1), python, python-daemon
+Description: Judge server running under flamehaze-outlaw
+ System for competitive programming. This program gets submissions from flamehaze-outlaw, judge the code, and send back the results.

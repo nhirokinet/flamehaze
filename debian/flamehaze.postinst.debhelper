@@ -1,0 +1,10 @@
+# Automatically added by dh_installinit
+if [ "$1" = "configure" ] || [ "$1" = "abort-upgrade" ]; then
+	if [ -x "/etc/init.d/flamehaze" ]; then
+		update-rc.d flamehaze defaults >/dev/null
+	fi
+	if [ -x "/etc/init.d/flamehaze" ] || [ -e "/etc/init/flamehaze.conf" ]; then
+		invoke-rc.d flamehaze start || exit $?
+	fi
+fi
+# End automatically added section
