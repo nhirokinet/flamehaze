@@ -1,6 +1,7 @@
 #!/usr/bin/python
 # -*- coding: utf-8 -*-
 
+import codecs
 import daemon
 import json
 import subprocess
@@ -28,7 +29,7 @@ POLL_PROBLEM_INTERVAL = 1
 DUMMY_MODE = False
 
 def write_to_file(filename, content):
-	f = open(filename, 'w')
+	f = codecs.open(filename, 'w', 'utf-8')
 	f.write(content)
 	f.close()
 
