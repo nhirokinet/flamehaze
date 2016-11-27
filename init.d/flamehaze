@@ -1,13 +1,30 @@
 #!/bin/bash
+# kFreeBSD do not accept scripts as interpreters, using #!/bin/sh and sourcing.
+#if [ true != "$INIT_D_SCRIPT_SOURCED" ] ; then
+#    set "$0" "$@"; INIT_D_SCRIPT_SOURCED=true . /lib/init/init-d-script
+#fi
 
 ### BEGIN INIT INFO
 # Provides:          flamehaze
-# Required-Start:    $local_fs
-# Required-Stop:     $local_fs
-# Default-Start:     S
-# Default-Stop:      1
-# Short-Description: start flamehaze
+# Required-Start:    $remote_fs $syslog
+# Required-Stop:     $remote_fs $syslog
+# Default-Start:     2 3 4 5
+# Default-Stop:      0 1 6
+# Short-Description: <Enter a short description of the software>
+# Description:       <Enter a long description of the software>
+#                    <...>
+#                    <...>
 ### END INIT INFO
+
+# Author: nhirokinet <nhirokinet@nhiroki.net>
+
+DESC="flamehaze"
+DAEMON=/usr/bin/flamehaze
+
+# This is an example to start a single forking daemon capable of writing
+# a pid file. To get other behaviors, implement do_start(), do_stop() or
+# other functions to override the defaults in /lib/init/init-d-script.
+# See also init-d-script(5)
 
 . /etc/default/flamehaze
 
@@ -18,7 +35,7 @@ start_service() {
 		if [ -d /proc/$pid ]
 		then
 			echo Already Running \(pid: $pid\)
-			exit 1
+			return 1
 		else
 			rm $FLAMEHAZE_PID_FILE
 		fi
@@ -30,7 +47,7 @@ start_service() {
 	if [ "$pid" = "" ]
 	then
 		echo Starting flamehaze failed
-		exit 1
+		return 1
 	fi
 
 	echo $pid > $FLAMEHAZE_PID_FILE
@@ -46,17 +63,17 @@ stop_service() {
 			echo Stopping flamehaze
 			kill -9 $pid
 			rm $FLAMEHAZE_PID_FILE
-			exit 0
+			return 0
 		else
 			echo PID file exists\, but process not running
 			echo Removing PID file
 			rm $FLAMEHAZE_PID_FILE
-			exit 1
+			return 1
 		fi
 	fi
 
 	echo Flamehaze not running
-	exit 1
+	return 1
 }
 
 display_status() {
