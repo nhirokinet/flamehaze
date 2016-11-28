@@ -65,7 +65,7 @@ def read_problem(outlaw_url, hostname):
 def output_result(outlaw_url, result):
 	try:
 		url = urlparse.urljoin(outlaw_url, PUT_RESULT_PATH)
-		url_instance = urllib2.urlopen(url, json.dumps(result, ensure_ascii=False))
+		url_instance = urllib2.urlopen(url, json.dumps(result))
 	except:
 		time.sleep(10)
 		# TODO: もう少しまともに処理する
@@ -83,6 +83,7 @@ def delete_image(img_name):
 
 def execute_input(img_file, in_txt, time_limit_sec):
 	item_res = {}
+	item_res['error_message'] = ''
 
 	start_time = time.time()
 	p = subprocess.Popen([FUZETSU_EXECUTABLE, 'lxc', 'run', img_file, str(time_limit_sec)],
@@ -94,6 +95,13 @@ def execute_input(img_file, in_txt, time_limit_sec):
 	exitstatus = p.wait()
 
 	item_res['output'] = p.stdout.read()
+
+	try:
+		item_res['output'] = item_res['output'].decode('utf-8')
+	except UnicodeError:
+		item_res['output'] = ''
+		item_res['error_message'] += "**Runtime** Output is not valid UTF-8 characters, ignored all\n"
+
 
 	for line in open('/tmp/fuzetsu-time-ns'):
 		time_ns = (float) (line.rstrip())
@@ -144,6 +152,7 @@ def build_src(src_file, img_file, language):
 
 
 	if exitstatus == 0:
+		res['error_message'] = compile_message
 		res['status'] = 'success'
 	elif exitstatus == 124:
 		res['error_message'] = 'Compile timed out.'
@@ -200,7 +209,7 @@ def main():
 
 		res['submission_id'] = submission['submission_id']
 		res['judger_hostname'] = hostname
-		
+
 		if res['status'] != 'success':
 			output_result(outlaw_uri, res)
 			continue
@@ -214,6 +223,9 @@ def main():
 
 			item_res = execute_input(TMP_IMG_NAME, in_txt, submission['time_limit'])
 			res['output_list'].append(item_res)
+
+			if item_res['error_message'] != '':
+				res['error_message'] += "\n\n" + item_res['error_message']
 			
 			if item_res['status'] != 'success':
 				res['status'] = item_res['status']
