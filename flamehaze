@@ -120,7 +120,7 @@ def execute_input(img_file, in_txt, time_limit_sec):
 	elif exitstatus == 127:
 		item_res['status'] = 'soft_fail'
 	elif exitstatus == 137:
-		item_res['status'] = 'soft_tle'
+		item_res['status'] = 'soft_runtime_error'
 	else:
 		item_res['status'] = 'soft_runtime_error'
 
