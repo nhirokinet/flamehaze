@@ -164,8 +164,8 @@ def build_src(src_file, img_file, language):
 	elif exitstatus == 127:
 		res['status'] = 'soft_build_fail'
 	elif exitstatus == 137:
-		res['error_message'] = 'Compile timed out.'
-		res['status'] = 'soft_build_tle'
+		res['error_message'] = compile_message + "\n\nCompile process was killed."
+		res['status'] = 'soft_build_fail'
 	else:
 		res['error_message'] = compile_message
 		res['status'] = 'build_fail'
