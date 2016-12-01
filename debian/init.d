@@ -35,7 +35,7 @@ start_service() {
 		if [ -d /proc/$pid ]
 		then
 			echo Already Running \(pid: $pid\)
-			exit 1
+			return 1
 		else
 			rm $FLAMEHAZE_PID_FILE
 		fi
@@ -47,7 +47,7 @@ start_service() {
 	if [ "$pid" = "" ]
 	then
 		echo Starting flamehaze failed
-		exit 1
+		return 1
 	fi
 
 	echo $pid > $FLAMEHAZE_PID_FILE
@@ -63,17 +63,17 @@ stop_service() {
 			echo Stopping flamehaze
 			kill -9 $pid
 			rm $FLAMEHAZE_PID_FILE
-			exit 0
+			return 0
 		else
 			echo PID file exists\, but process not running
 			echo Removing PID file
 			rm $FLAMEHAZE_PID_FILE
-			exit 1
+			return 1
 		fi
 	fi
 
 	echo Flamehaze not running
-	exit 1
+	return 1
 }
 
 display_status() {

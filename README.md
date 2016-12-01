@@ -12,6 +12,7 @@ sudo service flamehaze start
 
 ### Build dpkg file
 ```
+sudo apt install make build-essential fakeroot debhelper
 make dpkg
 ```
 
