@@ -90,11 +90,7 @@ def execute_input(img_file, in_txt, time_limit_sec):
 			     stdin=subprocess.PIPE,
 			     stdout=subprocess.PIPE,
 			     stderr=subprocess.PIPE)
-	p.stdin.write(in_txt)
-	p.stdin.close()
-	exitstatus = p.wait()
-
-	item_res['output'] = p.stdout.read()
+	item_res['output'], stderr_data = p.communicate(input=in_txt)
 
 	try:
 		item_res['output'] = item_res['output'].decode('utf-8')
@@ -114,6 +110,8 @@ def execute_input(img_file, in_txt, time_limit_sec):
 
 	item_res['execution_time'] = exe_time_sec
 	item_res['used_mem_kb'] = exe_mem_kb
+
+	exitstatus = p.returncode
 
 	if exitstatus == 0:
 		item_res['status'] = 'success'
@@ -140,9 +138,9 @@ def build_src(src_file, img_file, language):
 			     stdin=subprocess.PIPE,
 			     stdout=subprocess.PIPE,
 			     stderr=subprocess.PIPE)
-	p.stdin.close()
-	exitstatus = p.wait()
-	compile_message = p.stdout.read()
+	compile_message, stderr_dummy = p.communicate()
+
+	exitstatus = p.returncode
 
 	end_time = time.time()
 
