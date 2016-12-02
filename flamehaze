@@ -199,7 +199,7 @@ def main():
 	
 		write_to_file(TMP_SRC_FILE, submission['source_code'])
 
-		if submission['language'] not in ['lxc-c11', 'lxc-cpp11', 'lxc-java8', 'lxc-perl5', 'lxc-php7.0', 'lxc-python2', 'lxc-python3', 'lxc-ruby2.3', 'lxc-scala']:
+		if submission['language'] not in ['lxc-c11', 'lxc-cpp11', 'lxc-java8', 'lxc-perl5', 'lxc-php7.0', 'lxc-python2', 'lxc-python3', 'lxc-ruby2.3', 'lxc-scala', 'lxc-brainfuck', 'lxc-perl6-rakudostar', 'lxc-npiet-base64']:
 			res = {}
 			res['status'] = 'build_fail'
 			output_result(outlaw_uri, res)
