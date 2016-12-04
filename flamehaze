@@ -92,12 +92,7 @@ def execute_input(img_file, in_txt, time_limit_sec):
 			     stderr=subprocess.PIPE)
 	p.stdin.write(in_txt)
 	item_res['output'] = p.stdout.read(1048576) # up to 1MiB per case
-	p.stdin.close()
-	p.stdout.close()
-	p.stderr.close()
-
-	while p.poll() == None:
-		time.sleep(1)
+	p.wait()
 
 	exitstatus = p.returncode
 
