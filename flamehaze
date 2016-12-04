@@ -20,8 +20,8 @@ TMP_SRC_FILE = ''
 TMP_IMG_NAME = 'flamehaze-tmp'
 
 FUZETSU_EXECUTABLE = 'fuzetsu'
-GET_PROBLEM_PATH = 'get_unjudged.php'
-PUT_RESULT_PATH = 'put_result.php'
+GET_PROBLEM_PATH = 'get_task_to_do.json'
+PUT_RESULT_PATH = 'put_task_result.json'
 
 POLL_PROBLEM_INTERVAL = 1
 
